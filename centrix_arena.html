@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Centrix: Arena Master</title>
+<style>
+:root {
+  --bg: #05070a; 
+  --panel: #0d111c; 
+  --panel2: #14192b; 
+  --border: rgba(255,255,255,.08);
+  --blue: #38bdf8; 
+  --red: #f87171; 
+  --offwhite: #fafaf9; 
+  --text: #e2e8f0;
+  --c0: #ef4444; 
+  --c1: #2563eb; 
+  --c2: #fafaf9; 
+  --c3: #10b981; 
+  --c4: #7c3aed; 
+  --c5: #ea580c;
+}
+
+* { 
+  box-sizing: border-box; 
+  -webkit-tap-highlight-color: transparent; 
+  touch-action: manipulation; 
+}
+
+body { 
+  margin: 0; 
+  padding: 12px; 
+  background: var(--bg); 
+  color: var(--text); 
+  font-family: system-ui, -apple-system, sans-serif; 
+  min-height: 100vh; 
+  display: flex; 
+  flex-direction: column; 
+  max-width: 500px; 
+  margin: 0 auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Ambient glow affecting body backdrop */
+body::before {
+  content: '';
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.04) 0%, rgba(124, 58, 237, 0.02) 50%, transparent 100%);
+  z-index: -2;
+  pointer-events: none;
+  animation: ambientBacklightPulse 8s infinite alternate ease-in-out;
+}
+
+@keyframes ambientBacklightPulse {
+  0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0.7; }
+  100% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+}
+
+#topbar { 
+  display: flex; 
+  justify-content: space-between; 
+  align-items: center; 
+  gap: 12px; 
+  margin-bottom: 6px; 
+  padding: 4px; 
+}
+
+.hud { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 4px; 
+  font-size: 11px; 
+  font-weight: 800; 
+}
+
+.hud .nm { 
+  letter-spacing: 1px; 
+  opacity: .7; 
+  text-transform: uppercase; 
+  font-size: 10px; 
+}
+
+.pips { 
+  display: flex; 
+  gap: 4px; 
+  align-items: center; 
+}
+
+.pip { 
+  width: 14px; 
+  height: 14px; 
+  border-radius: 50%; 
+  background: var(--panel2); 
+  border: 1.5px solid var(--border); 
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5); 
+}
+
+.pip.on { 
+  border-color: var(--offwhite); 
+  background: var(--offwhite); 
+  box-shadow: 0 0 10px var(--offwhite); 
+}
+
+#banner { 
+  flex: 1; 
+  text-align: center; 
+  font-weight: 800; 
+  font-size: 13px; 
+  padding: 10px; 
+  border-radius: 12px; 
+  background: var(--panel); 
+  border: 1px solid var(--border); 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3); 
+  transition: all 0.3s ease;
+}
+
+#banner.player { 
+  color: var(--blue); 
+  border-color: rgba(56,189,248,.3); 
+  box-shadow: 0 0 10px rgba(56,189,248,.1);
+}
+
+#banner.ai { 
+  color: var(--red); 
+  border-color: rgba(248,113,113,.3); 
+  box-shadow: 0 0 10px rgba(248,113,113,.1);
+}
+
+#boardWrap { 
+  position: relative; 
+  width: 100%; 
+  display: flex; 
+  justify-content: center; 
+  margin: 4px 0; 
+}
+
+#board { 
+  width: 100%; 
+  height: auto; 
+  aspect-ratio: 1/1; 
+  display: block; 
+  background: transparent; 
+  filter: drop-shadow(0 12px 24px rgba(0,0,0,0.6)); 
+}
+
+#hint { 
+  text-align: center; 
+  font-size: 12.5px; 
+  font-weight: 700; 
+  color: var(--offwhite); 
+  min-height: 38px; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  padding: 0 10px; 
+  text-shadow: 0 2px 4px rgba(0,0,0,0.5); 
+}
+
+#confirmRow { 
+  display: flex; 
+  justify-content: center; 
+  gap: 10px; 
+  min-height: 42px; 
+  margin-bottom: 8px; 
+}
+
+#confirmBtn, #cancelBtn { 
+  display: none; 
+  font-weight: 800; 
+  border: none; 
+  border-radius: 12px; 
+  padding: 10px 20px; 
+  font-size: 13px; 
+  cursor: pointer; 
+  transition: transform 0.1s; 
+  box-shadow: 0 4px 10px rgba(0,0,0,0.4); 
+}
+
+#confirmBtn { 
+  background: var(--offwhite); 
+  color: #000; 
+}
+
+#cancelBtn { 
+  background: var(--panel2); 
+  color: var(--text); 
+  border: 1px solid var(--border); 
+}
+
+#handArea { 
+  margin-top: auto; 
+  background: var(--panel); 
+  border-radius: 20px; 
+  padding: 16px; 
+  border: 1px solid var(--border); 
+  box-shadow: inset 0 2px 8px rgba(255,255,255,0.05), 0 10px 25px rgba(0,0,0,0.5); 
+}
+
+#handLbl { 
+  text-align: center; 
+  font-size: 10px; 
+  letter-spacing: 2px; 
+  text-transform: uppercase; 
+  opacity: .5; 
+  font-weight: 700; 
+  margin-bottom: 12px; 
+}
+
+#hand { 
+  display: flex; 
+  gap: 12px; 
+  justify-content: center; 
+}
+
+.card { 
+  flex: 1; 
+  max-width: 115px; 
+  min-height: 155px; 
+  border-radius: 12px; 
+  overflow: hidden; 
+  cursor: pointer; 
+  border: 2px solid var(--border); 
+  display: flex; 
+  flex-direction: column; 
+  background: #151a2e;
+  transition: border-color 0.25s, box-shadow 0.25s, transform 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+  box-shadow: 0 6px 12px rgba(0,0,0,0.5);
+  position: relative;
+}
+
+/* Entire card selectable pointer coverage */
+.card * {
+  pointer-events: none; 
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 18px rgba(56, 189, 248, 0.15);
+}
+
+.card.armed { 
+  border-color: var(--offwhite); 
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(255,255,255,.15); 
+}
+
+.card.dim { 
+  opacity: .2; 
+  pointer-events: none; 
+  transform: translateY(0);
+}
+
+.cardIndexTop { 
+  position: absolute; 
+  top: 6px; 
+  left: 8px; 
+  font-size: 18px; 
+  font-weight: 900; 
+  color: #fff; 
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
+}
+
+.cardIndexBottom { 
+  position: absolute; 
+  bottom: 6px; 
+  right: 8px; 
+  font-size: 18px; 
+  font-weight: 900; 
+  color: #fff; 
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8); 
+}
+
+.cardCenterRing { 
+  width: 60px; 
+  height: 60px; 
+  border-radius: 50%; 
+  border: 6px dashed rgba(255,255,255,0.2); 
+  margin: auto; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+}
+
+.cardInnerCore { 
+  width: 34px; 
+  height: 34px; 
+  border-radius: 50%; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  font-weight: 900; 
+  color: white; 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4); 
+}
+
+.wild { 
+  background: linear-gradient(135deg, var(--c0), var(--c1), #fff, var(--c3), var(--c4), var(--c5)); 
+}
+
+#flash { 
+  position: fixed; 
+  inset: 0; 
+  pointer-events: none; 
+  opacity: 0; 
+  z-index: 70; 
+}
+
+#flash.go { 
+  animation: fk .3s ease-out; 
+}
+
+@keyframes fk { 
+  0% { opacity: .35; } 
+  100% { opacity: 0; } 
+}
+
+.modalBg { 
+  position: fixed; 
+  inset: 0; 
+  background: rgba(5,7,14,.98); 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  padding: 16px; 
+  z-index: 95; 
+}
+
+.modalBg.hide { 
+  display: none; 
+}
+
+.modalCard { 
+  background: var(--panel); 
+  border: 2px solid var(--border); 
+  border-radius: 28px; 
+  padding: 28px; 
+  max-width: 410px; 
+  width: 100%; 
+  text-align: center; 
+  box-shadow: 0 20px 50px rgba(0,0,0,0.7); 
+}
+
+.modalCard h2 { 
+  font-size: 28px; 
+  font-weight: 900; 
+  margin: 0 0 6px; 
+  color: var(--offwhite); 
+  letter-spacing: 2px; 
+}
+
+.howto { 
+  text-align: left; 
+  background: var(--panel2); 
+  border-radius: 16px; 
+  padding: 16px 20px; 
+  margin: 14px 0; 
+  list-style: none; 
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); 
+}
+
+.howto li { 
+  font-size: 12px; 
+  line-height: 1.6; 
+  font-weight: 600; 
+  margin-bottom: 8px; 
+  position: relative; 
+  padding-left: 14px; 
+}
+
+.howto li::before { 
+  content: "•"; 
+  position: absolute; 
+  left: 0; 
+  color: var(--offwhite); 
+}
+
+.modeSelection { 
+  display: flex; 
+  gap: 10px; 
+  margin: 16px 0; 
+  justify-content: center; 
+}
+
+.modeOpt { 
+  flex: 1; 
+  padding: 12px; 
+  border-radius: 14px; 
+  background: var(--panel2); 
+  border: 2px solid var(--border); 
+  font-weight: 800; 
+  font-size: 13px; 
+  cursor: pointer; 
+  color: var(--text); 
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3); 
+}
+
+.modeOpt.sel { 
+  border-color: var(--offwhite); 
+  color: var(--offwhite); 
+  background: rgba(255,255,255,.03); 
+}
+
+.bigBtn { 
+  width: 100%; 
+  font-weight: 800; 
+  border: none; 
+  border-radius: 14px; 
+  cursor: pointer; 
+  padding: 14px; 
+  font-size: 15px; 
+  color: #000; 
+  background: var(--offwhite); 
+  box-shadow: 0 6px 20px rgba(255,255,255,0.15); 
+}
+
+#endModal .modalCard { 
+  border-width: 2px; 
+}
+
+#endModal.victory .modalCard { 
+  border-color: var(--blue); 
+  box-shadow: 0 0 30px rgba(56, 189, 248, 0.3);
+}
+
+#endModal.defeat .modalCard { 
+  border-color: var(--red); 
+  box-shadow: 0 0 30px rgba(248, 113, 113, 0.3);
+}
+
+.scoreDesc { 
+  font-size: 14px; 
+  margin: 12px 0 20px; 
+  line-height: 1.5; 
+  opacity: 0.9; 
+}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <div class="hud"><span class="nm" id="p1Lbl">Player 1 (Blue)</span><div class="pips" id="pPips"></div></div>
+  <div id="banner" class="player">YOUR TURN</div>
+  <div class="hud" style="align-items:flex-end"><span class="nm" id="p2Lbl">Computer (Red)</span><div class="pips" id="aPips"></div></div>
+</div>
+
+<div id="boardWrap"><canvas id="board" width="540" height="540"></canvas></div>
+<div id="hint">Tap a card below to begin your sequence.</div>
+<div id="confirmRow"><button id="cancelBtn">Cancel Action</button><button id="confirmBtn">Confirm Move</button></div>
+<div id="handArea"><div id="handLbl">Current Active Deck Hand</div><div id="hand"></div></div>
+
+<div id="flash"></div>
+
+<div class="modalBg" id="startModal"><div class="modalCard">
+  <h2>CENTRIX</h2>
+  <ul class="howto">
+    <li>Race all 3 pegs into the center Core peak to win.</li>
+    <li>Tap a card, then select a ring block to spin or a pawn to climb.</li>
+    <li><strong>Wildcards (W):</strong> Select the card, click "reserve", and tap any track on Ring 1 to deploy.</li>
+    <li><strong>Chaos Rule:</strong> Bumping pieces triggers an automatic randomized rotation cascade across all layers!</li>
+  </ul>
+  
+  <div class="modeSelection">
+    <button class="modeOpt sel" id="mSolo">VS COMPUTER</button>
+    <button class="modeOpt" id="mPvp">LOCAL 2 PLAYER</button>
+  </div>
+  
+  <button class="bigBtn" id="startBtn">Launch Board Engine</button>
+</div></div>
+
+<div class="modalBg hide" id="endModal"><div class="modalCard">
+  <h2 id="endTitle">MATCH RESOLVED</h2>
+  <p class="scoreDesc" id="endText"></p>
+  <button class="bigBtn" id="endBtn">Rematch Arena</button>
+</div></div>
+
+<script>
+const CFG={rings:6,slots:12,colors:['c0','c1','c2','c3','c4','c5'],
+  hex:{c0:'#ef4444',c1:'#3b82f6',c2:'#fafaf9',c3:'#10b981',c4:'#7c3aed',c5:'#ea580c'},
+  names:{c0:'Crimson',c1:'Azure',c2:'Off-White',c3:'Jade',c4:'Violet',c5:'Amber'},
+  aiThinkMs:900,handSize:3};
+
+let rings=[],orbs=[],orbId=1,player={score:0,unplaced:3},ai={score:0,unplaced:3},turn='player',gameMode='vs_computer';
+let deck=[],discard=[],hand=[];
+let cardIdx=null,ringSel=null,slotClicked=null,pawnSel=null,customSpawnSlot=null,locked=false,started=false,gameOver=false;
+let particles=[],floaties=[],lastT=performance.now();
+let chaosTriggered = false;
+
+const $=id=>document.getElementById(id);
+const cv=$('board'),ctx=cv.getContext('2d');
+
+// Rings Enlarged: R_OUT increased to 260, CORE_R reduced to 35, RT track width increased to 37.5px (from 32.5px)
+const CX=270,CY=270,R_OUT=260,CORE_R=35,RT=(R_OUT-CORE_R)/CFG.rings;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const norm12=v=>((v%12)+12)%12;
+const rnd=n=>Math.floor(Math.random()*n);
+const label=o=>o.owner==='player'?(gameMode==='pvp'?'Player 1':'Blue'):(gameMode==='pvp'?'Player 2':'Red');
+
+let actx=null;
+function beep(f,d,t,v){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+  const o=actx.createOscillator(),g=actx.createGain();o.type=t||'square';o.frequency.value=f;g.gain.value=v||.025;
+  o.connect(g);g.connect(actx.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+(d||.1));o.stop(actx.currentTime+(d||.1));}catch(e){}}
+const sfxStep=()=>beep(440,.05,'square',.02);
+function sfxClimb(){[523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,.1,'square',.035),i*60));}
+function sfxBump(){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+  const o=actx.createOscillator(),g=actx.createGain();o.type='sawtooth';g.gain.value=.04;
+  o.frequency.setValueAtTime(400,actx.currentTime);o.frequency.exponentialRampToValueAtTime(70,actx.currentTime+.25);
+  o.connect(g);g.connect(actx.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+.27);o.stop(actx.currentTime+.29);}catch(e){}}
+const sfxJump=()=>{beep(600,.05,'triangle',.025);setTimeout(()=>beep(950,.07,'triangle',.025),65);};
+
+function buildDeck(){
+  deck=[];
+  CFG.colors.forEach(c=>[1,2,3].forEach(n=>{for(let k=0;k<2;k++)deck.push({type:'number',move:n,color:c});}));
+  for(let k=0;k<3;k++)deck.push({type:'wild_nospin',color:'any'});
+  shuffle(deck); discard=[];
+}
+function shuffle(a){for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];}}
+function drawHand(){
+  if(deck.length<CFG.handSize){deck=deck.concat(discard);discard=[];shuffle(deck);}
+  const h=[];for(let i=0;i<CFG.handSize&&deck.length>0;i++)h.push(deck.pop());
+  return h;
+}
+function discardCards(cs){discard=discard.concat(cs);}
+
+function genRings(){
+  rings=[];
+  for(let i=0;i<CFG.rings;i++){
+    const slots=[];
+    for(let s=0;s<CFG.slots;s++)slots.push({color:CFG.colors[s%6]});
+    rings.push({rotation:0,visRotation:0,slots});
+  }
+}
+const occupantAt=(r,s,exclude)=>orbs.find(o=>o.ring===r&&o.slot===s&&o.id!==exclude);
+function spawnPawns(){ orbs=[]; orbId=1; player.unplaced=3; ai.unplaced=3; }
+
+const absLane=(r,s)=>(s+rings[r].rotation)%12;
+const slotAtLane=(r,lane)=>norm12(lane-rings[r].rotation);
+function nextRingTarget(r,s){if(r===CFG.rings-1)return'core';const lane=absLane(r,s);return{ringIdx:r+1,slotIdx:slotAtLane(r+1,lane)};}
+const climbTarget=orb=>nextRingTarget(orb.ring,orb.slot);
+const colorMatches=(cardColor,slotColor)=>cardColor==='any'||cardColor===slotColor;
+
+async function triggerChaosSpin(steps) {
+  flashScreen('chaos');
+  let spinPromises = rings.map((ring, idx) => {
+    let randomOffset = (rnd(3) + 1) * (rnd(2) === 0 ? 1 : -1);
+    ring.rotation = norm12(ring.rotation + randomOffset);
+    return tweenVis(ring, ring.visRotation + randomOffset * 30, 800);
+  });
+  await Promise.all(spinPromises);
+}
+
+function cascadeBump(orb,steps){
+  orb.isAnimating = true;
+  orb.animTargetY = 25; 
+  const newRing=orb.ring-2;
+  spawnBumpFx(orb); sfxBump(); showFloaty(orb,'BUMPED!','#f87171');
+  
+  chaosTriggered = true;
+
+  if(newRing<0){
+    orbs=orbs.filter(o=>o.id!==orb.id);
+    (orb.owner==='player'?player:ai).unplaced++;
+    return;
+  }
+  const lane=absLane(orb.ring,orb.slot), newSlot=slotAtLane(newRing,lane);
+  const occ=occupantAt(newRing,newSlot,orb.id);
+  orb.ring=newRing; orb.slot=newSlot;
+  setTimeout(() => { orb.isAnimating = false; }, 300);
+  if(occ){ cascadeBump(occ,steps); }
+}
+function genericJump(orb,from,steps){
+  let t=from;
+  while(t!=='core'&&occupantAt(t.ringIdx,t.slotIdx,orb.id)) t=nextRingTarget(t.ringIdx,t.slotIdx);
+  if(t==='core'){ enterCore(orb); return; }
+  orb.ring=t.ringIdx; orb.slot=t.slotIdx;
+  showFloaty(orb,'LEAPFROG!','#38bdf8'); sfxJump();
+}
+function enterCore(orb){
+  orbs=orbs.filter(o=>o.id!==orb.id);
+  const side=orb.owner==='player'?player:ai; side.score++;
+  spawnScoreFx(orb.owner); renderHUD();
+  if(side.score>=3) gameOver={winner:orb.owner};
+}
+function resolvePawn(orb,cardColor,ringIdx,steps){
+  if(orb.ring===CFG.rings-1){ enterCore(orb); return; }
+  const target=climbTarget(orb), slotColor=rings[target.ringIdx].slots[target.slotIdx].color;
+  if(!colorMatches(cardColor,slotColor)){ return; }
+  const occ=occupantAt(target.ringIdx,target.slotIdx,orb.id);
+  
+  orb.isAnimating = true; 
+  if(!occ){
+    orb.ring=target.ringIdx; orb.slot=target.slotIdx;
+    showFloaty(orb,'CLIMB!','#10b981'); sfxClimb();
+    setTimeout(() => { orb.isAnimating = false; }, 250);
+    return;
+  }
+  if(occ.owner===orb.owner){ genericJump(orb,target,steps); orb.isAnimating = false; return; }
+  cascadeBump(occ,steps);
+  orb.ring=target.ringIdx; orb.slot=target.slotIdx;
+  showFloaty(orb,'CLIMB!','#10b981'); sfxClimb();
+  setTimeout(() => { orb.isAnimating = false; }, 250);
+}
+function resolveRing(ringIdx,cardColor,steps){ orbs.filter(o=>o.ring===ringIdx).forEach(o=>resolvePawn(o,cardColor,ringIdx,steps)); }
+
+function findEntrySlot(color){
+  if(customSpawnSlot!==null) return customSpawnSlot;
+  const m=[]; for(let s=0;s<12;s++) if(colorMatches(color,rings[0].slots[s].color)) m.push(s);
+  if(!m.length) return null;
+  const free=m.find(s=>!occupantAt(0,s)); return free!=null?free:m[0];
+}
+function placePawn(owner,cardColor,steps){
+  const side=owner === 'player' ? player : ai;
+  if(side.unplaced<=0){ return; }
+  const slot=findEntrySlot(cardColor);
+  if(slot==null){ return; }
+  const occ=occupantAt(0,slot,null);
+  
+  const trays = unplacedTrayPositions(side.unplaced, owner === 'player');
+  const startCoord = trays[trays.length - 1] || { x: CX, y: CY };
+  
+  if(occ&&occ.owner===owner){
+    const orb={
+      id:orbId++,
+      owner,
+      ring:0,
+      slot,
+      isAnimating:false,
+      visX: startCoord.x,
+      visY: startCoord.y,
+      scaleY: 1.0
+    }; 
+    side.unplaced--; 
+    orbs.push(orb);
+    genericJump(orb,{ringIdx:0,slotIdx:slot},steps); 
+    return;
+  }
+  if(occ){ 
+    cascadeBump(occ,steps); 
+  }
+  const orb={
+    id:orbId++,
+    owner,
+    ring:0,
+    slot,
+    isAnimating:false,
+    visX: startCoord.x,
+    visY: startCoord.y,
+    scaleY: 1.0
+  }; 
+  side.unplaced--; 
+  orbs.push(orb);
+  showFloaty(orb,'ENTER!','#10b981'); 
+  sfxClimb();
+}
+
+const easeOut=t=>1-(1-t)*(1-t);
+function tweenVis(ring,target,dur){
+  return new Promise(res=>{
+    const start=ring.visRotation,t0=performance.now();
+    (function step(){ const t=clamp((performance.now()-t0)/dur,0,1); ring.visRotation=start+(target-start)*easeOut(t);
+      if(t<1)requestAnimationFrame(step); else {ring.visRotation=target;res();} })();
+  });
+}
+async function animateSteps(ringIdx,dir,n,owner){
+  const ring=rings[ringIdx], onRing=orbs.filter(o=>o.ring===ringIdx), start=ring.visRotation;
+  onRing.filter(o=>o.owner!==owner).forEach(o=>{ o.dragFlash=performance.now()+900; showFloaty(o,'DRAGGED!','#ffffff'); });
+  ring.rotation=norm12(ring.rotation+dir*n);
+  for(let i=1;i<=n;i++){
+    await tweenVis(ring,start+dir*30*i,180); sfxStep();
+    onRing.filter(o=>o.owner===owner).forEach(o=>showFloaty(o,(dir>0?'+':'-')+i,'#fbbf24'));
+    await sleep(60);
+  }
+}
+
+async function playCardMove(owner,card,ringIdx,dir,n,fromHand){
+  locked=true; renderAll();
+  const steps=[];
+  if(n>0) await animateSteps(ringIdx,dir,n,owner);
+  resolveRing(ringIdx,card.color,steps);
+  renderAll();
+  
+  if (chaosTriggered && !gameOver) {
+    const chaosSteps = [];
+    await triggerChaosSpin(chaosSteps);
+    chaosTriggered = false;
+  }
+  
+  if(fromHand){ hand=hand.filter(c=>c!==card); discardCards([card]); }
+  customSpawnSlot=null;
+  locked=false;
+  if(gameOver){ endGame(); return; }
+}
+async function playAdvanceMoveCustom(owner,card,orb,fromHand){
+  locked=true; renderAll();
+  const steps=[];
+  resolvePawn(orb,card.color,orb.ring,steps);
+  renderAll();
+  
+  if (chaosTriggered && !gameOver) {
+    const chaosSteps = [];
+    await triggerChaosSpin(chaosSteps);
+    chaosTriggered = false;
+  }
+  
+  if(fromHand){ hand=hand.filter(c=>c!==card); discardCards([card]); }
+  customSpawnSlot=null;
+  locked=false;
+  if(gameOver){ endGame(); return; }
+}
+async function playPlaceMove(owner,card,fromHand){
+  locked=true; renderAll();
+  const steps=[];
+  placePawn(owner,card.color,steps);
+  renderAll();
+  
+  if (chaosTriggered && !gameOver) {
+    const chaosSteps = [];
+    await triggerChaosSpin(chaosSteps);
+    chaosTriggered = false;
+  }
+  
+  if(fromHand){ hand=hand.filter(c=>c!==card); discardCards([card]); }
+  customSpawnSlot=null;
+  locked=false;
+  if(gameOver){ endGame(); return; }
+}
+
+function startPlayerTurn(){
+  if(gameOver)return;
+  turn='player'; hand=drawHand(); cardIdx=null; ringSel=null; slotClicked=null; pawnSel=null; customSpawnSlot=null;
+  const labelText = gameMode === 'pvp' ? 'PLAYER 1 TURN' : 'YOUR TURN';
+  $('banner').textContent=labelText; $('banner').className='player';
+  renderAll();
+}
+function startPlayer2Turn(){
+  if(gameOver)return;
+  turn='ai'; hand=drawHand(); cardIdx=null; ringSel=null; slotClicked=null; pawnSel=null; customSpawnSlot=null;
+  $('banner').textContent='PLAYER 2 TURN'; $('banner').className='ai';
+  renderAll();
+}
+async function startAiTurn(){
+  if(gameOver)return;
+  turn='ai'; $('banner').textContent='AI CALIBRATING OPTIONS...'; $('banner').className='ai'; renderAll();
+  let aiHand=drawHand();
+  while(aiHand.length>0&&!gameOver){
+    await sleep(CFG.aiThinkMs);
+    if(gameOver)break;
+    const choice=pickAiMove(aiHand); if(!choice)break;
+    aiHand=aiHand.filter(c=>c!==choice.card);
+    discardCards([choice.card]);
+    if(choice.mode==='spin') await playCardMove('ai',choice.card,choice.ringIdx,choice.dir,choice.n,false);
+    else if(choice.mode==='advance'){ const orb=orbs.find(o=>o.id===choice.orbId); if(orb) await playAdvanceMoveCustom('ai',choice.card,orb,false); }
+    else await playPlaceMove('ai',choice.card,false);
+  }
+  if(!gameOver) startPlayerTurn();
+}
+
+function eligiblePawns(){ return orbs.filter(o=>o.owner===(turn==='player'?'player':'ai')); }
+function armCard(i){
+  if(locked)return;
+  cardIdx=cardIdx===i?null:i; ringSel=null; slotClicked=null; pawnSel=null; customSpawnSlot=null;
+  renderAll();
+}
+function selectRing(r, slot) {
+  if(locked||cardIdx==null)return;
+  const card=hand[cardIdx]; 
+  
+  if(pawnSel==='unplaced' && r===0 && (card.color==='any' || colorMatches(card.color, rings[0].slots[slot].color))) {
+    customSpawnSlot = slot;
+    confirmAdvance();
+    return;
+  }
+  if(card.type==='wild_nospin')return;
+  const currentOwner=turn==='player'?'player':'ai';
+  if(!orbs.some(o=>o.owner===currentOwner&&o.ring===r))return;
+  pawnSel=null; ringSel=ringSel===r?null:r; slotClicked=slot; renderAll();
+}
+function selectPawn(orb){
+  if(locked||cardIdx==null)return;
+  const currentOwner=turn==='player'?'player':'ai';
+  if(orb.owner!==currentOwner)return;
+  ringSel=null; slotClicked=null; pawnSel=orb.id; renderAll();
+}
+function selectUnplaced(){
+  if(locked||cardIdx==null)return;
+  const currentSide=turn==='player'?player:ai; if(currentSide.unplaced<=0)return;
+  ringSel=null; slotClicked=null; pawnSel='unplaced'; renderAll();
+}
+
+async function tapArrow(dir){
+  if(cardIdx==null||ringSel==null)return;
+  const card=hand[cardIdx];
+  const activeOwner=turn==='player'?'player':'ai';
+  await playCardMove(activeOwner,card,ringSel,dir,card.move,true);
+  cardIdx=null; ringSel=null; slotClicked=null;
+  if(!gameOver) evaluateTurnState();
+}
+async function confirmAdvance(){
+  if(cardIdx==null||pawnSel==null)return;
+  const card=hand[cardIdx];
+  const activeOwner=turn==='player'?'player':'ai';
+  if(pawnSel==='unplaced') await playPlaceMove(activeOwner,card,true);
+  else { const orb=orbs.find(o=>o.id===pawnSel); if(!orb)return; await playAdvanceMoveCustom(activeOwner,card,orb,true); }
+  cardIdx=null; pawnSel=null;
+  if(!gameOver) evaluateTurnState();
+}
+function evaluateTurnState(){
+  if(hand.length===0){
+    if(gameMode==='vs_computer') turn==='player'?startAiTurn():startPlayerTurn();
+    else turn==='player'?startPlayer2Turn():startPlayerTurn();
+  } else {
+    renderAll();
+  }
+}
+function cancelSelection() { 
+  ringSel = null; 
+  slotClicked = null; 
+  pawnSel = null; 
+  customSpawnSlot = null; 
+  renderAll(); 
+}
+
+function drawPawnPeg(cx, cy, radius, fillHex, scaleY = 1) {
+  ctx.save();
+  ctx.translate(cx, cy);
+  
+  ctx.scale(1 / Math.sqrt(scaleY), scaleY);
+  
+  ctx.shadowColor = "rgba(0,0,0,0.65)";
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetY = 6;
+
+  ctx.fillStyle = "#111";
+  ctx.beginPath(); ctx.ellipse(0, 16, radius * 1.1, radius * 0.4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.shadowColor = "transparent";
+
+  ctx.strokeStyle = "#0d0e15";
+  ctx.lineWidth = 3;
+  ctx.fillStyle = fillHex;
+
+  ctx.beginPath();
+  ctx.moveTo(-radius * 0.7, 14);
+  ctx.quadraticCurveTo(-radius * 0.8, 16, 0, 17);
+  ctx.quadraticCurveTo(radius * 0.8, 16, radius * 0.7, 14);
+  ctx.lineTo(radius * 0.35, -2);
+  ctx.quadraticCurveTo(0, -6, -radius * 0.35, -2);
+  ctx.closePath();
+  ctx.stroke(); ctx.fill();
+
+  ctx.beginPath();
+  ctx.arc(0, -11, radius * 0.6, 0, Math.PI * 2);
+  ctx.stroke(); ctx.fill();
+
+  ctx.fillStyle = "rgba(255,255,255,0.24)";
+  ctx.beginPath(); ctx.arc(-radius*0.18, -13, radius * 0.16, 0, Math.PI * 2); ctx.fill();
+
+  ctx.restore();
+}
+
+function polarXY(ringIdx,deg){const rO=R_OUT-ringIdx*RT,rI=R_OUT-(ringIdx+1)*RT,m=(rO+rI)/2,rad=(deg-90)*Math.PI/180;
+  return{x:CX+Math.cos(rad)*m,y:CY+Math.sin(rad)*m};}
+const orbXY=o=>polarXY(o.ring,o.slot*30+rings[o.ring].visRotation);
+function showFloaty(o,text,color){const p=orbXY(o);floaties.push({x:p.x,y:p.y,text,color,life:1});}
+function spawnBumpFx(o){const p=orbXY(o),c=o.owner==='player'?'#38bdf8':'#f87171';
+  for(let i=0;i<14;i++){const a=Math.random()*6.283,sp=45+Math.random()*55;particles.push({x:p.x,y:p.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,color:c});}}
+function spawnScoreFx(owner){flashScreen(owner);const c=owner==='player'?'#38bdf8':'#f87171';
+  for(let i=0;i<30;i++){const a=Math.random()*6.283,sp=65+Math.random()*120;particles.push({x:CX,y:CY,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1.2,color:c});}}
+function flashScreen(type){const el=$('flash');
+  el.style.background=type==='player'?'rgba(56,189,248,.25)':type==='chaos'?'rgba(250,250,249,0.35)':'rgba(248,113,113,.25)';
+  el.classList.remove('go');void el.offsetWidth;el.classList.add('go');}
+
+function predictTarget(orb,card){
+  if(orb.ring===CFG.rings-1) return {core:true};
+  const t=climbTarget(orb);
+  if(!colorMatches(card.color,rings[t.ringIdx].slots[t.slotIdx].color)) return {ringIdx:t.ringIdx,slotIdx:t.slotIdx,kind:'mismatch'};
+  const occ=occupantAt(t.ringIdx,t.slotIdx,orb.id);
+  if(!occ) return {ringIdx:t.ringIdx,slotIdx:t.slotIdx,kind:'climb'};
+  return {ringIdx:t.ringIdx,slotIdx:t.slotIdx,kind:occ.owner===orb.owner?'jump':'bump'};
+}
+function predictEntry(card){
+  if(customSpawnSlot !== null) return {ringIdx:0,slotIdx:customSpawnSlot,kind:'climb'};
+  const slot=findEntrySlot(card.color);
+  if(slot==null) return null;
+  const occ=occupantAt(0,slot);
+  return {ringIdx:0,slotIdx:slot,kind:!occ?'climb':(occ.owner===(turn==='player'?'player':'ai')?'jump':'bump')};
+}
+
+function ringAdjacentArrowPositions(ringIdx, baseSlot) {
+  const ccwSlot = norm12(baseSlot - 1);
+  const cwSlot = norm12(baseSlot + 1);
+  const ring = rings[ringIdx];
+  const ccwP = polarXY(ringIdx, ccwSlot * 30 + ring.visRotation);
+  const cwP = polarXY(ringIdx, cwSlot * 30 + ring.visRotation);
+  return {
+    ccw: { x: ccwP.x, y: ccwP.y, deg: ccwSlot * 30 + ring.visRotation },
+    cw: { x: cwP.x, y: cwP.y, deg: cwSlot * 30 + ring.visRotation }
+  };
+}
+
+function unplacedTrayPositions(count, isPlayer) {
+  const r=R_OUT+24;
+  const angles = isPlayer ? [-20,0,20] : [160,180,200];
+  return angles.slice(0,count).map(a=>{const rad=(a-90)*Math.PI/180;return{x:CX+Math.cos(rad)*r,y:CY+Math.sin(rad)*r};});
+}
+
+function drawRings(){
+  ctx.clearRect(0,0,540,540);
+  
+  // Ambient radial glow behind the game board structure
+  const pulseScale = 1 + Math.sin(performance.now() / 500) * 0.04;
+  const boardGlow = ctx.createRadialGradient(CX, CY, CORE_R, CX, CY, R_OUT * pulseScale);
+  boardGlow.addColorStop(0, 'rgba(56, 189, 248, 0.12)');
+  boardGlow.addColorStop(0.5, 'rgba(124, 58, 237, 0.05)');
+  boardGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+  ctx.fillStyle = boardGlow;
+  ctx.beginPath();
+  ctx.arc(CX, CY, R_OUT * 1.4, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.5)"; ctx.shadowBlur = 20; ctx.fillStyle = "#090d16";
+  ctx.beginPath(); ctx.arc(CX, CY, R_OUT, 0, Math.PI * 2); ctx.fill();
+  ctx.restore();
+
+  for(let i=0;i<CFG.rings;i++){
+    const ring=rings[i],rO=R_OUT-i*RT,rI=R_OUT-(i+1)*RT;
+    for(let s=0;s<CFG.slots;s++){
+      const slot=ring.slots[s],ang=s*30+ring.visRotation,a0=(ang-15-90)*Math.PI/180,a1=(ang+15-90)*Math.PI/180;
+      ctx.beginPath();ctx.arc(CX,CY,rO,a0,a1);ctx.arc(CX,CY,rI,a1,a0,true);ctx.closePath();
+      ctx.fillStyle=CFG.hex[slot.color];ctx.globalAlpha=.95;ctx.fill();
+      ctx.globalAlpha=1;ctx.strokeStyle='#101424';ctx.lineWidth=2.5;ctx.stroke();
+    }
+    if(ringSel===i){
+      ctx.beginPath();ctx.arc(CX,CY,rO-1,0,6.283);ctx.strokeStyle='rgba(250,250,249,.95)';ctx.lineWidth=3.5;ctx.setLineDash([6,4]);ctx.stroke();ctx.setLineDash([]);
+    }
+  }
+
+  // Ring guide brackets tracking system
+  ctx.lineWidth = 2.5;
+  ctx.strokeStyle = 'rgba(56,189,248,0.4)';
+  ctx.beginPath(); ctx.arc(CX, CY, R_OUT+24, (-35-90)*Math.PI/180, (35-90)*Math.PI/180); ctx.stroke();
+  ctx.strokeStyle = 'rgba(248,113,113,0.4)';
+  ctx.beginPath(); ctx.arc(CX, CY, R_OUT+24, (145-90)*Math.PI/180, (215-90)*Math.PI/180); ctx.stroke();
+
+  if(cardIdx!=null&&!locked&&ringSel==null&&pawnSel==null){
+    eligiblePawns().forEach(o=>{ const p=orbXY(o);
+      ctx.beginPath();ctx.arc(p.x,p.y,18,0,6.283);ctx.strokeStyle='rgba(250,250,249,.95)';ctx.lineWidth=2.5;ctx.stroke(); });
+  }
+
+  // Draw active tracking map pawns with micro-animations
+  orbs.forEach(o=>{
+    const target = orbXY(o);
+    if (o.visX === undefined || o.visY === undefined) {
+      o.visX = target.x;
+      o.visY = target.y;
+      o.scaleY = 1.0;
+    } else {
+      const dx = target.x - o.visX;
+      const dy = target.y - o.visY;
+      const dist = Math.hypot(dx, dy);
+      if (dist > 1.2) {
+        o.visX += dx * 0.16;
+        o.visY += dy * 0.16;
+        // Hop/Stretching micro-animation
+        o.scaleY = 1.0 + Math.sin(Math.min(1, 12 / dist) * Math.PI) * 0.28;
+        
+        // Gorgeous motion dust trail
+        if (dist > 10 && Math.random() < 0.45) {
+          particles.push({
+            x: o.visX + (Math.random() - 0.5) * 8,
+            y: o.visY + (Math.random() - 0.5) * 8,
+            vx: (Math.random() - 0.5) * 12,
+            vy: (Math.random() - 0.5) * 12,
+            life: 0.5,
+            color: o.owner === 'player' ? 'rgba(56,189,248,0.7)' : 'rgba(248,113,113,0.7)'
+          });
+        }
+      } else {
+        o.visX = target.x;
+        o.visY = target.y;
+        o.scaleY = 1.0;
+      }
+    }
+
+    const dragged = o.dragFlash && performance.now() < o.dragFlash;
+    if (dragged) {
+      ctx.beginPath(); 
+      ctx.arc(o.visX, o.visY, 20, 0, 6.283); 
+      ctx.strokeStyle = '#fff'; 
+      ctx.lineWidth = 2.5; 
+      ctx.stroke();
+    }
+    if (o.id === pawnSel) {
+      ctx.beginPath(); 
+      ctx.arc(o.visX, o.visY, 20, 0, 6.283); 
+      ctx.strokeStyle = '#fff'; 
+      ctx.lineWidth = 2.5; 
+      ctx.stroke();
+    }
+
+    drawPawnPeg(o.visX, o.visY, 17, o.owner === 'player' ? '#2563eb' : '#dc2626', o.scaleY);
+  });
+
+  if(player.unplaced>0){
+    unplacedTrayPositions(player.unplaced, true).forEach(p=>{
+      drawPawnPeg(p.x, p.y, 13, 'rgba(56,189,248,0.45)');
+      if(turn==='player'&&pawnSel==='unplaced'){ctx.beginPath();ctx.arc(p.x,p.y,16,0,6.283);ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();}
+    });
+  }
+  if(ai.unplaced>0){
+    unplacedTrayPositions(ai.unplaced, false).forEach(p=>{
+      drawPawnPeg(p.x, p.y, 13, 'rgba(248,113,113,0.45)');
+    });
+  }
+
+  if(cardIdx!=null && pawnSel==='unplaced' && (turn==='player' || gameMode==='pvp')) {
+    const card = hand[cardIdx];
+    for (let s=0; s<12; s++) {
+      if(card.color==='any' || colorMatches(card.color, rings[0].slots[s].color)) {
+        const ang=s*30+rings[0].visRotation, a0=(ang-13-90)*Math.PI/180, a1=(ang+13-90)*Math.PI/180;
+        ctx.beginPath(); ctx.arc(CX,CY,R_OUT,a0,a1); ctx.arc(CX,CY,R_OUT - RT,a1,a0,true); ctx.closePath();
+        ctx.strokeStyle='#ffffff'; ctx.lineWidth=3.5; ctx.stroke();
+      }
+    }
+  }
+
+  if(ringSel!=null && slotClicked!=null){
+    const {ccw,cw}=ringAdjacentArrowPositions(ringSel, slotClicked);
+    const pulse=1+Math.sin(performance.now()/120)*0.22;
+    [[ccw,-1],[cw,1]].forEach(([pos,dir])=>{
+      ctx.save();ctx.translate(pos.x,pos.y);ctx.rotate((pos.deg)*Math.PI/180);ctx.scale(pulse,pulse);
+      ctx.shadowColor='#000000';ctx.shadowBlur=10;ctx.fillStyle='#fbbf24';ctx.beginPath();
+      if(dir<0){ctx.moveTo(-9,0);ctx.lineTo(6,-9);ctx.lineTo(6,9);} else {ctx.moveTo(9,0);ctx.lineTo(-6,-9);ctx.lineTo(-6,9);}
+      ctx.closePath();ctx.fill();
+      ctx.strokeStyle = '#000000'; ctx.lineWidth = 2.5; ctx.stroke(); ctx.restore();
+    });
+  }
+
+  if(pawnSel!=null && pawnSel!=='unplaced' && cardIdx!=null){
+    const card=hand[cardIdx];
+    const pred = predictTarget(orbs.find(o=>o.id===pawnSel),card);
+    if(pred&&!pred.core){
+      const col = pred.kind==='climb'?'#10b981':pred.kind==='jump'?'#38bdf8':pred.kind==='bump'?'#f87171':'#475569';
+      const rO=R_OUT-pred.ringIdx*RT, rI=R_OUT-(pred.ringIdx+1)*RT;
+      const ang=pred.slotIdx*30+rings[pred.ringIdx].visRotation;
+      const a0=(ang-15-90)*Math.PI/180, a1=(ang+15-90)*Math.PI/180;
+      ctx.beginPath();ctx.arc(CX,CY,rO,a0,a1);ctx.arc(CX,CY,rI,a1,a0,true);ctx.closePath();
+      ctx.strokeStyle=col;ctx.lineWidth=4;ctx.stroke();
+    }
+  }
+
+  particles.forEach(p=>{ctx.globalAlpha=clamp(p.life,0,1);ctx.fillStyle=p.color;ctx.beginPath();ctx.arc(p.x,p.y,3.5,0,6.283);ctx.fill();});
+  ctx.globalAlpha=1;
+  floaties.forEach(f=>{ctx.globalAlpha=clamp(f.life,0,1);ctx.fillStyle=f.color;ctx.font='bold 12px system-ui';ctx.textAlign='center';
+    ctx.fillText(f.text,f.x,f.y-18*(1-f.life)-10);});
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#07090e';ctx.beginPath();ctx.arc(CX,CY,CORE_R,0,6.283);ctx.fill();
+  ctx.strokeStyle='rgba(250,250,249,.6)';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='#fafaf9';ctx.font='bold 11px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('CORE',CX,CY);
+}
+
+function renderHUD(){
+  const p1Name = gameMode==='pvp' ? 'P1' : 'You';
+  const p2Name = gameMode==='pvp' ? 'P2' : 'AI';
+  $('pPips').innerHTML=Array.from({length:3},(_,i)=>`<div class="pip ${i<player.score?'on':''}"></div>`).join('')+`<small style="margin-left:6px;opacity:.6;font-weight:700">${p1Name}:${player.unplaced}</small>`;
+  $('aPips').innerHTML=Array.from({length:3},(_,i)=>`<div class="pip ${i<ai.score?'on':''}"></div>`).join('')+`<small style="margin-left:6px;opacity:.6;font-weight:700">${p2Name}:${ai.unplaced}</small>`;
+}
+
+function renderHand(){
+  if(gameMode==='vs_computer' && turn!=='player'){ 
+    $('handLbl').textContent='Computer Hand Processing'; 
+    $('hand').innerHTML='<div style="text-align:center;opacity:.4;font-weight:700;font-size:13px;padding:34px 0;flex:1;letter-spacing:1px">AI parsing legal paths...</div>'; 
+    return; 
+  }
+  const sideTitle = gameMode==='pvp' ? (turn==='player'?'Player 1 Actions':'Player 2 Actions') : 'Your Active Deck Hand';
+  $('handLbl').textContent=sideTitle;
+  
+  $('hand').innerHTML=hand.map((c,i)=>{
+    const dim=locked||((pawnSel!=null||ringSel!=null)&&cardIdx!==i);
+    if(c.type==='number') {
+      return `<div class="card ${cardIdx===i?'armed':''} ${dim?'dim':''}" data-i="${i}">
+        <div class="cardIndexTop">${c.move}</div>
+        <div class="cardCenterRing">
+           <div class="cardInnerCore" style="background:${CFG.hex[c.color]}">${c.move}</div>
+        </div>
+        <div class="cardIndexBottom">${c.move}</div>
+        <div class="cTag">${CFG.names[c.color]}</div>
+      </div>`;
+    }
+    return `<div class="card wild ${cardIdx===i?'armed':''} ${dim?'dim':''}" data-i="${i}">
+      <div class="cardIndexTop">W</div>
+      <div class="cardCenterRing">
+         <div class="cardInnerCore" style="background:#222">W</div>
+      </div>
+      <div class="cardIndexBottom">W</div>
+      <div class="cTag">Any (No Spin)</div>
+    </div>`;
+  }).join('');
+  
+  $('hand').querySelectorAll('.card').forEach((el,i)=>{
+    el.onclick=()=>armCard(i);
+  });
+}
+
+function renderHint(){
+  if(locked){ $('hint').textContent='Evaluating Board Matrix...'; return; }
+  if(cardIdx==null){ $('hint').textContent='Tap an available card below to begin your sequence.'; return; }
+  const card=hand[cardIdx];
+  if(pawnSel==='unplaced' && (turn=='player' || gameMode==='pvp')) {
+    $('hint').textContent = 'Tap directly on a valid highlighted ring space to deploy.';
+    return;
+  }
+  if(ringSel!=null){ $('hint').textContent='Use on-ring vector arrow indicators to execute spin.'; return; }
+  if(pawnSel!=null){ $('hint').textContent='Tap Confirm to advance pawn into next node.'; return; }
+  $('hint').textContent = card.type==='wild_nospin' ? 'Select unplaced reserve or active pawn to advance.' : 'Select a ring block layer to spin, or an available pawn to climb.';
+}
+function confirmRow(){
+  const card=cardIdx!=null?hand[cardIdx]:null;
+  $('cancelBtn').style.display = ((ringSel!=null||pawnSel!=null)&&!locked) ? 'inline-block':'none';
+  if(!card||locked){ $('confirmBtn').style.display='none'; return; }
+  if(pawnSel==='unplaced') { $('confirmBtn').style.display='none'; return; }
+  if(pawnSel!=null){ $('confirmBtn').style.display='inline-block'; $('confirmBtn').textContent='Confirm Move'; return; }
+  $('confirmBtn').style.display='none';
+}
+function renderAll(){ renderHUD(); renderHand(); renderHint(); confirmRow(); }
+
+function evToXY(e){
+  const rect=cv.getBoundingClientRect();
+  return { x: (e.clientX - rect.left) * (540 / rect.width), y: (e.clientY - rect.top) * (540 / rect.height) };
+}
+function hitArrow(x,y){
+  if(ringSel==null || slotClicked==null)return null;
+  const {ccw,cw}=ringAdjacentArrowPositions(ringSel, slotClicked);
+  if(Math.hypot(x-ccw.x,y-ccw.y)<26)return -1;
+  if(Math.hypot(x-cw.x,y-cw.y)<26)return 1;
+  return null;
+}
+function hitPawn(x,y){ return orbs.find(o=>Math.hypot(x-orbXY(o).x,y-orbXY(o).y)<20); }
+function hitUnplaced(x,y){
+  const activeSide = turn==='player'?'player':'ai';
+  const unplacedCount = activeSide==='player'?player.unplaced:ai.unplaced;
+  return unplacedTrayPositions(unplacedCount, activeSide==='player').some(p=>Math.hypot(x-p.x,y-p.y)<18);
+}
+function hitBand(x,y){
+  const d=Math.hypot(x-CX,y-CY);
+  if(d<CORE_R||d>R_OUT)return null;
+  const ringIdx = clamp(Math.floor((R_OUT-d)/RT),0,CFG.rings-1);
+  const rad = Math.atan2(y-CY, x-CX);
+  let deg = rad*(180/Math.PI) + 90;
+  if(deg<0) deg+=360;
+  const currentRotation = rings[ringIdx].visRotation;
+  let adjustedDeg = deg - currentRotation;
+  if(adjustedDeg<0) adjustedDeg += 360;
+  const slotIdx = Math.floor((adjustedDeg + 15) % 360 / 30);
+  return { ringIdx, slotIdx: norm12(slotIdx) };
+}
+
+cv.addEventListener('pointerdown',e=>{
+  if(locked || (gameMode==='vs_computer' && turn==='ai'))return; 
+  const {x,y}=evToXY(e);
+  if(ringSel!=null){ const dir=hitArrow(x,y); if(dir!=null){ tapArrow(dir); return; } }
+  if(hitUnplaced(x,y)){ selectUnplaced(); return; }
+  const orb=hitPawn(x,y); if(orb){ selectPawn(orb); return; }
+  const band=hitBand(x,y); if(band!=null){ selectRing(band.ringIdx, band.slotIdx); return; }
+});
+$('confirmBtn').onclick=confirmAdvance;
+$('cancelBtn').onclick=cancelSelection;
+
+const cloneRings=()=>rings.map(r=>({rotation:r.rotation,slots:r.slots.map(s=>({color:s.color}))}));
+const cloneOrbs=()=>orbs.map(o=>({...o}));
+function simulateMove(card,ringIdx,dir,n){
+  const sr=cloneRings(),so=cloneOrbs(); if(n>0)sr[ringIdx].rotation=norm12(sr[ringIdx].rotation+dir*n);
+  let score=0;
+  so.filter(o=>o.ring===ringIdx).forEach(orb=>{
+    if(orb.ring===CFG.rings-1){score+=orb.owner==='ai'?5:-4;return;}
+    const lane=(orb.slot+sr[orb.ring].rotation)%12, s2=norm12(lane-sr[orb.ring+1].rotation);
+    if(!colorMatches(card.color,sr[orb.ring+1].slots[s2].color))return;
+    const occ=so.find(o=>o.ring===orb.ring+1&&o.slot===s2&&o.id!==orb.id);
+    if(occ){ if(occ.owner===orb.owner)return; score+=orb.owner==='ai'?2:-2.5; }
+    score+=orb.owner==='ai'?3:-2.5;
+  });
+  return score;
+}
+
+function simulateAdvance(card,orb){
+  if(orb.ring===CFG.rings-1) return orb.owner==='ai'?5:-4;
+  const t=climbTarget(orb);
+  if(!colorMatches(card.color,rings[t.ringIdx].slots[t.slotIdx].color)) return -99;
+  const occ=occupantAt(t.ringIdx,t.slotIdx,orb.id);
+  if(occ&&occ.owner===orb.owner) return 0.5;
+  let sc=orb.owner==='ai'?3:-2.5;
+  if(occ) sc+=orb.owner==='ai'?2:-2.5;
+  return sc;
+}
+
+function simulatePlace(card,owner){
+  const targetColor = card.color === 'any' ? CFG.colors[rnd(6)] : card.color;
+  const m=[]; for(let s=0;s<12;s++) if(colorMatches(targetColor,rings[0].slots[s].color)) m.push(s);
+  if(!m.length) return -99;
+  const free=m.find(s=>!occupantAt(0,s)); const slot=free!=null?free:m[0];
+  const occ=occupantAt(0,slot);
+  if(occ&&occ.owner===owner) return 0.5;
+  let sc=owner==='ai'?2.2:-2;
+  if(occ) sc+=owner==='ai'?1.5:-2;
+  return sc;
+}
+
+function pickAiMove(aiHand){
+  let best=null;
+  aiHand.forEach(card=>{
+    if(card.type!=='wild_nospin'){
+      const opts=[card.move];
+      for(let r=0;r<CFG.rings;r++){
+        if(!orbs.some(o=>o.owner==='ai'&&o.ring===r))continue;
+        opts.forEach(n=>{ [1,-1].forEach(dir=>{ const sc=simulateMove(card,r,dir,n); if(!best||sc>best.score)best={score:sc,card,mode:'spin',ringIdx:r,dir,n}; }); });
+      }
+    }
+    orbs.filter(o=>o.owner==='ai').forEach(orb=>{ const sc=simulateAdvance(card,orb); if(!best||sc>best.score)best={score:sc,card,mode:'advance',orbId:orb.id}; });
+    if(ai.unplaced>0){ const sc=simulatePlace(card,'ai'); if(!best||sc>best.score)best={score:sc,card,mode:'place'}; }
+  });
+  return best;
+}
+
+function endGame(){
+  const won=gameOver.winner==='player';
+  const modal = $('endModal');
+  modal.className = 'modalBg';
+  if(gameMode === 'pvp') {
+    $('endTitle').textContent = won ? 'PLAYER 1 VICTORY' : 'PLAYER 2 VICTORY';
+    modal.classList.add(won ? 'victory' : 'defeat');
+    $('endText').textContent = won ? 'Player 1 aligned all 3 components into the Core.' : 'Player 2 aligned all 3 components into the Core.';
+  } else {
+    $('endTitle').textContent = won ? 'VICTORY' : 'DEFEAT';
+    modal.classList.add(won ? 'victory' : 'defeat');
+    $('endText').textContent = won ? 'Sensational alignment sequence! You secured all 3 matrix elements into the central core.' : 'The AI managed to calculate and map all 3 elements into the central hub first.';
+  }
+  modal.classList.remove('hide');
+}
+function resetGame(){
+  gameOver=false; player.score=0; ai.score=0; cardIdx=null; ringSel=null; slotClicked=null; pawnSel=null; customSpawnSlot=null; locked=false; particles=[]; floaties=[];
+  $('p1Lbl').textContent = gameMode==='pvp' ? 'Player 1 (Blue)' : 'Player (Blue)';
+  $('p2Lbl').textContent = gameMode==='pvp' ? 'Player 2 (Red)' : 'Computer (Red)';
+  genRings(); spawnPawns(); buildDeck(); $('endModal').className='modalBg hide'; startPlayerTurn();
+}
+
+function frame(t){
+  const dt=clamp((t-lastT)/1000,0,.05); lastT=t;
+  particles.forEach(p=>{p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=.93;p.vy*=.93;p.life-=dt*1.5;});
+  particles=particles.filter(p=>p.life>0);
+  floaties.forEach(f=>f.life-=dt*0.85); floaties=floaties.filter(f=>f.life>0);
+  if(started)drawRings();
+  requestAnimationFrame(frame);
+}
+
+$('mSolo').onclick=()=>{ $('mSolo').classList.add('sel'); $('mPvp').classList.remove('sel'); gameMode='vs_computer'; };
+$('mPvp').onclick=()=>{ $('mPvp').classList.add('sel'); $('mSolo').classList.remove('sel'); gameMode='pvp'; };
+
+$('startBtn').onclick=()=>{ 
+  $('startModal').classList.add('hide'); started=true; resetGame(); 
+  if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}} 
+};
+$('endBtn').onclick=resetGame;
+
+genRings(); spawnPawns(); buildDeck(); requestAnimationFrame(frame);
+</script>
+</body>
+</html>
