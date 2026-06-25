@@ -113,6 +113,14 @@ body::before {
   box-shadow: 0 0 10px var(--offwhite); 
 }
 
+#bannerWrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 #banner { 
   flex: 1; 
   text-align: center; 
@@ -136,6 +144,67 @@ body::before {
   color: var(--red); 
   border-color: rgba(248,113,113,.3); 
   box-shadow: 0 0 10px rgba(248,113,113,.1);
+}
+
+.iconBtn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.35);
+}
+.iconBtn:active { transform: scale(.92); }
+
+#tutorialBar {
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(56,189,248,.16), rgba(124,58,237,.1));
+  border: 1px solid rgba(56,189,248,.35);
+  border-radius: 14px;
+  padding: 10px 12px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+#tutorialBar.hide { display: none; }
+#tutText { flex: 1; font-size: 12px; font-weight: 700; line-height: 1.4; }
+#tutNextBtn {
+  flex-shrink: 0;
+  font-weight: 800;
+  font-size: 12px;
+  border: none;
+  border-radius: 10px;
+  padding: 9px 14px;
+  background: var(--offwhite);
+  color: #000;
+  cursor: pointer;
+  white-space: nowrap;
+}
+#tutSkipBtn {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text);
+  opacity: .55;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 4px;
+}
+.tutPulse { animation: tutGlow 1.1s infinite alternate; }
+@keyframes tutGlow {
+  0% { box-shadow: 0 0 0 rgba(250,250,249,0); }
+  100% { box-shadow: 0 0 18px 4px rgba(250,250,249,.45); }
 }
 
 #boardWrap { 
@@ -412,6 +481,20 @@ body::before {
   color: #000; 
   background: var(--offwhite); 
   box-shadow: 0 6px 20px rgba(255,255,255,0.15); 
+  margin-top: 8px;
+}
+
+.ghostBtn {
+  width: 100%;
+  font-weight: 800;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  cursor: pointer;
+  padding: 13px;
+  font-size: 14px;
+  color: var(--text);
+  background: var(--panel2);
+  margin-top: 10px;
 }
 
 #endModal .modalCard { 
@@ -428,6 +511,11 @@ body::before {
   box-shadow: 0 0 30px rgba(248, 113, 113, 0.3);
 }
 
+#endModal.draw .modalCard {
+  border-color: #fbbf24;
+  box-shadow: 0 0 30px rgba(251, 191, 36, 0.3);
+}
+
 .scoreDesc { 
   font-size: 14px; 
   margin: 12px 0 20px; 
@@ -440,8 +528,18 @@ body::before {
 
 <div id="topbar">
   <div class="hud"><span class="nm" id="p1Lbl">Player 1 (Blue)</span><div class="pips" id="pPips"></div></div>
-  <div id="banner" class="player">YOUR TURN</div>
+  <div id="bannerWrap">
+    <button class="iconBtn" id="rulesBtn" title="How to play">?</button>
+    <div id="banner" class="player">YOUR TURN</div>
+    <button class="iconBtn" id="muteBtn" title="Toggle sound">&#128266;</button>
+  </div>
   <div class="hud" style="align-items:flex-end"><span class="nm" id="p2Lbl">Computer (Red)</span><div class="pips" id="aPips"></div></div>
+</div>
+
+<div id="tutorialBar" class="hide">
+  <div id="tutText"></div>
+  <button id="tutNextBtn">Next &#9654;</button>
+  <button id="tutSkipBtn">Skip</button>
 </div>
 
 <div id="boardWrap"><canvas id="board" width="720" height="720"></canvas></div>
@@ -466,6 +564,23 @@ body::before {
   </div>
   
   <button class="bigBtn" id="startBtn">Launch Board Engine</button>
+  <button class="ghostBtn" id="tutorialBtn">Walk Me Through It First</button>
+</div></div>
+
+<div class="modalBg hide" id="rulesModal"><div class="modalCard">
+  <h2>HOW TO PLAY</h2>
+  <ul class="howto">
+    <li><strong>Goal:</strong> Be first to get all 3 of your pawns into the glowing Core at the center.</li>
+    <li><strong>Your hand:</strong> You hold 3 cards and must play all 3, one at a time, before drawing a fresh 3.</li>
+    <li><strong>Entering the board:</strong> Your pawns start off the board, waiting beside it. Tap a card, tap a waiting pawn, then tap a glowing slot on Ring 1 that matches the card's color to deploy it there.</li>
+    <li><strong>Number cards:</strong> Tap the ring your pawn sits on, then tap a gold arrow to spin that ring by the card's number — OR tap your pawn directly and confirm to move it one ring inward if the new slot's color matches.</li>
+    <li><strong>Wildcards (W):</strong> Move any one pawn one ring inward matching ANY color — but they can never spin a ring.</li>
+    <li><strong>Jump:</strong> Land on your own pawn and you leapfrog over it for free.</li>
+    <li><strong>Bump:</strong> Land on an opponent's pawn and it's knocked back 2 rings. Far enough back and it's bumped clean off the board, returning to their waiting pawns.</li>
+    <li><strong>Chaos Rule:</strong> Every bump triggers a random rotation cascade across all 6 rings — fortunes can flip fast!</li>
+    <li><strong>Win:</strong> First side to get all 3 pawns into the Core wins the match.</li>
+  </ul>
+  <button class="bigBtn" id="closeRulesBtn">Got It</button>
 </div></div>
 
 <div class="modalBg hide" id="endModal"><div class="modalCard">
@@ -475,6 +590,7 @@ body::before {
 </div></div>
 
 <script>
+const $=id=>document.getElementById(id);
 const CFG={rings:6,slots:12,colors:['c0','c1','c2','c3','c4','c5'],
   hex:{c0:'#ef4444',c1:'#3b82f6',c2:'#fafaf9',c3:'#10b981',c4:'#7c3aed',c5:'#ea580c'},
   names:{c0:'Crimson',c1:'Azure',c2:'Off-White',c3:'Jade',c4:'Violet',c5:'Amber'},
@@ -486,7 +602,83 @@ let cardIdx=null,ringSel=null,slotClicked=null,pawnSel=null,customSpawnSlot=null
 let particles=[],floaties=[],lastT=performance.now();
 let chaosTriggered = false;
 
-const $=id=>document.getElementById(id);
+/* ===== Tutorial state ===== */
+let tutorialMode=false, tutorialStep=0;
+const TUTORIAL_STEPS=[
+  {text:"Welcome to Centrix! Race all 3 of your pawns to the glowing Core at the center to win. Let's walk through your first moves.", action:null},
+  {text:"Your pawns start OFF the board, waiting beside it (look just outside the rings). The board itself has 6 rings, each split into 12 colored slots.", action:null},
+  {text:"These are your cards. Tap the highlighted card to select it.", action:'armCard',
+    setup:()=>{ hand=[{type:'number',move:1,color:'c0'},{type:'number',move:1,color:'c1'},{type:'wild_nospin',color:'any'}];
+      cardIdx=null; ringSel=null; slotClicked=null; pawnSel=null; customSpawnSlot=null; }},
+  {text:"Now tap one of your waiting pawns -- the glowing dots just beside the board.", action:'selectUnplaced'},
+  {text:"Tap the highlighted slot on Ring 1 to deploy your pawn there -- a card's color decides where it's allowed to land.", action:'enter'},
+  {text:"You're on the board! Cards also move pawns inward, one ring at a time.", action:null,
+    setup:()=>{ hand=[{type:'number',move:1,color:'c1'}]; }},
+  {text:"Tap your card to select it.", action:'armCard'},
+  {text:"Now tap the ring your pawn is sitting on -- anywhere on that ring EXCEPT directly on your pawn.", action:'selectRing'},
+  {text:"See the gold arrow glowing on the ring? Tap it to spin that direction.", action:'spin'},
+  {text:"If the slot you land on matches your card's color, you climb inward automatically -- chase matching colors to race inward!", action:null},
+  {text:"Two more things: land on your OWN pawn and you leapfrog it for free. Land on an OPPONENT's pawn and you bump it back 2 rings -- far enough and it's knocked clean off the board!", action:null},
+  {text:"That's everything you need. Get all 3 pawns into the glowing Core to win. Ready to play for real?", action:null}
+];
+function showTutorialStep(){
+  const step=TUTORIAL_STEPS[tutorialStep];
+  if(!step)return;
+  if(step.setup) step.setup();
+  $('tutText').textContent=step.text;
+  $('tutNextBtn').style.display = step.action ? 'none' : 'inline-block';
+  $('tutNextBtn').textContent = tutorialStep===TUTORIAL_STEPS.length-1 ? 'Start Playing!' : 'Next \u25B6';
+  renderAll();
+}
+function tutAdvance(){
+  tutorialStep++;
+  if(tutorialStep>=TUTORIAL_STEPS.length){ endTutorial(); return; }
+  showTutorialStep();
+}
+function tutAdvanceIfAction(action){
+  if(!tutorialMode)return;
+  const step=TUTORIAL_STEPS[tutorialStep];
+  if(step && step.action===action) tutAdvance();
+}
+function startTutorial(){
+  $('startModal').classList.add('hide');
+  started=true; tutorialMode=true; tutorialStep=0;
+  genRings(); spawnPawns(); buildDeck();
+  player.score=0; ai.score=0; gameOver=false; locked=false; particles=[]; floaties=[];
+  $('p1Lbl').textContent='Player (Blue)'; $('p2Lbl').textContent='Computer (Red)';
+  turn='player'; $('banner').textContent='TUTORIAL'; $('banner').className='player';
+  hand=[]; cardIdx=null; ringSel=null; slotClicked=null; pawnSel=null; customSpawnSlot=null;
+  $('tutorialBar').classList.remove('hide');
+  if(!actx){try{actx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+  showTutorialStep();
+}
+function endTutorial(){
+  tutorialMode=false;
+  $('tutorialBar').classList.add('hide');
+  resetGame();
+}
+$('tutNextBtn').onclick=()=>{
+  if(tutorialStep===TUTORIAL_STEPS.length-1){ endTutorial(); return; }
+  tutAdvance();
+};
+$('tutSkipBtn').onclick=endTutorial;
+$('tutorialBtn').onclick=startTutorial;
+
+/* ===== Sound toggle ===== */
+let soundOn = true;
+try{ soundOn = localStorage.getItem('centrixMuted')!=='1'; }catch(e){}
+function updateMuteIcon(){ $('muteBtn').innerHTML = soundOn ? '&#128266;' : '&#128263;'; }
+$('muteBtn').onclick=()=>{
+  soundOn=!soundOn;
+  try{ localStorage.setItem('centrixMuted', soundOn?'0':'1'); }catch(e){}
+  updateMuteIcon();
+};
+updateMuteIcon();
+
+/* ===== Rules modal ===== */
+$('rulesBtn').onclick=()=>{ $('rulesModal').classList.remove('hide'); };
+$('closeRulesBtn').onclick=()=>{ $('rulesModal').classList.add('hide'); };
+
 const cv=$('board'),ctx=cv.getContext('2d');
 
 // Optimized board constraints: R_OUT reduced to 270px (from 300px) which grants 90px of edge layout padding.
@@ -502,12 +694,12 @@ const rnd=n=>Math.floor(Math.random()*n);
 const label=o=>o.owner==='player'?(gameMode==='pvp'?'Player 1':'Blue'):(gameMode==='pvp'?'Player 2':'Red');
 
 let actx=null;
-function beep(f,d,t,v){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+function beep(f,d,t,v){ if(!soundOn) return; try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
   const o=actx.createOscillator(),g=actx.createGain();o.type=t||'square';o.frequency.value=f;g.gain.value=v||.025;
   o.connect(g);g.connect(actx.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+(d||.1));o.stop(actx.currentTime+(d||.1));}catch(e){}}
 const sfxStep=()=>beep(440,.05,'square',.02);
 function sfxClimb(){[523,659,784].forEach((f,i)=>setTimeout(()=>beep(f,.1,'square',.035),i*60));}
-function sfxBump(){try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
+function sfxBump(){ if(!soundOn) return; try{if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();
   const o=actx.createOscillator(),g=actx.createGain();o.type='sawtooth';g.gain.value=.04;
   o.frequency.setValueAtTime(400,actx.currentTime);o.frequency.exponentialRampToValueAtTime(70,actx.currentTime+.25);
   o.connect(g);g.connect(actx.destination);o.start();g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+.27);o.stop(actx.currentTime+.29);}catch(e){}}
@@ -584,7 +776,8 @@ function enterCore(orb){
   orbs=orbs.filter(o=>o.id!==orb.id);
   const side=orb.owner==='player'?player:ai; side.score++;
   spawnScoreFx(orb.owner); renderHUD();
-  if(side.score>=3) gameOver={winner:orb.owner};
+  if(player.score>=3 && ai.score>=3) gameOver={draw:true};
+  else if(side.score>=3) gameOver={winner:orb.owner};
 }
 function resolvePawn(orb,cardColor,ringIdx,steps){
   if(orb.ring===CFG.rings-1){ enterCore(orb); return; }
@@ -692,8 +885,8 @@ async function playCardMove(owner,card,ringIdx,dir,n,fromHand){
   
   if(fromHand){ hand=hand.filter(c=>c!==card); discardCards([card]); }
   customSpawnSlot=null;
+  if(gameOver){ await sleep(1100); endGame(); locked=false; return; }
   locked=false;
-  if(gameOver){ endGame(); return; }
 }
 async function playAdvanceMoveCustom(owner,card,orb,fromHand){
   locked=true; renderAll();
@@ -709,8 +902,8 @@ async function playAdvanceMoveCustom(owner,card,orb,fromHand){
   
   if(fromHand){ hand=hand.filter(c=>c!==card); discardCards([card]); }
   customSpawnSlot=null;
+  if(gameOver){ await sleep(1100); endGame(); locked=false; return; }
   locked=false;
-  if(gameOver){ endGame(); return; }
 }
 async function playPlaceMove(owner,card,fromHand){
   locked=true; renderAll();
@@ -726,8 +919,8 @@ async function playPlaceMove(owner,card,fromHand){
   
   if(fromHand){ hand=hand.filter(c=>c!==card); discardCards([card]); }
   customSpawnSlot=null;
+  if(gameOver){ await sleep(1100); endGame(); locked=false; return; }
   locked=false;
-  if(gameOver){ endGame(); return; }
 }
 
 function startPlayerTurn(){
@@ -764,6 +957,7 @@ function eligiblePawns(){ return orbs.filter(o=>o.owner===(turn==='player'?'play
 function armCard(i){
   if(locked)return;
   cardIdx=cardIdx===i?null:i; ringSel=null; slotClicked=null; pawnSel=null; customSpawnSlot=null;
+  if(cardIdx!=null) tutAdvanceIfAction('armCard');
   renderAll();
 }
 function selectRing(r, slot) {
@@ -778,7 +972,9 @@ function selectRing(r, slot) {
   if(card.type==='wild_nospin')return;
   const currentOwner=turn==='player'?'player':'ai';
   if(!orbs.some(o=>o.owner===currentOwner&&o.ring===r))return;
-  pawnSel=null; ringSel=ringSel===r?null:r; slotClicked=slot; renderAll();
+  pawnSel=null; ringSel=ringSel===r?null:r; slotClicked=slot;
+  tutAdvanceIfAction('selectRing');
+  renderAll();
 }
 function selectPawn(orb){
   if(locked||cardIdx==null)return;
@@ -789,7 +985,9 @@ function selectPawn(orb){
 function selectUnplaced(){
   if(locked||cardIdx==null)return;
   const currentSide=turn==='player'?player:ai; if(currentSide.unplaced<=0)return;
-  ringSel=null; slotClicked=null; pawnSel='unplaced'; renderAll();
+  ringSel=null; slotClicked=null; pawnSel='unplaced';
+  tutAdvanceIfAction('selectUnplaced');
+  renderAll();
 }
 
 async function tapArrow(dir){
@@ -798,18 +996,22 @@ async function tapArrow(dir){
   const activeOwner=turn==='player'?'player':'ai';
   await playCardMove(activeOwner,card,ringSel,dir,card.move,true);
   cardIdx=null; ringSel=null; slotClicked=null;
+  tutAdvanceIfAction('spin');
   if(!gameOver) evaluateTurnState();
 }
 async function confirmAdvance(){
   if(cardIdx==null||pawnSel==null)return;
   const card=hand[cardIdx];
   const activeOwner=turn==='player'?'player':'ai';
+  const wasUnplaced = pawnSel==='unplaced';
   if(pawnSel==='unplaced') await playPlaceMove(activeOwner,card,true);
   else { const orb=orbs.find(o=>o.id===pawnSel); if(!orb)return; await playAdvanceMoveCustom(activeOwner,card,orb,true); }
   cardIdx=null; pawnSel=null;
+  if(wasUnplaced) tutAdvanceIfAction('enter');
   if(!gameOver) evaluateTurnState();
 }
 function evaluateTurnState(){
+  if(tutorialMode){ renderAll(); return; }
   if(hand.length===0){
     if(gameMode==='vs_computer') turn==='player'?startAiTurn():startPlayerTurn();
     else turn==='player'?startPlayer2Turn():startPlayerTurn();
@@ -1086,25 +1288,26 @@ function renderHUD(){
 }
 
 function renderHand(){
-  if(gameMode==='vs_computer' && turn!=='player'){ 
+  if(gameMode==='vs_computer' && turn!=='player' && !tutorialMode){ 
     $('handLbl').textContent='Computer Hand Processing'; 
     $('hand').innerHTML='<div style="text-align:center;opacity:.4;font-weight:700;font-size:13px;padding:34px 0;flex:1;letter-spacing:1px">AI parsing legal paths...</div>'; 
     return; 
   }
-  const sideTitle = gameMode==='pvp' ? (turn==='player'?'Player 1 Actions':'Player 2 Actions') : 'Your Active Deck Hand';
+  const sideTitle = tutorialMode ? 'Tutorial Hand' : gameMode==='pvp' ? (turn==='player'?'Player 1 Actions':'Player 2 Actions') : 'Your Active Deck Hand';
   $('handLbl').textContent=sideTitle;
   
   $('hand').innerHTML=hand.map((c,i)=>{
     const dim=locked||((pawnSel!=null||ringSel!=null)&&cardIdx!==i);
+    const tutHighlight = tutorialMode && TUTORIAL_STEPS[tutorialStep] && TUTORIAL_STEPS[tutorialStep].action==='armCard' && cardIdx==null;
     if(c.type==='number') {
-      return `<div class="card ${cardIdx===i?'armed':''} ${dim?'dim':''}" data-i="${i}">
+      return `<div class="card ${cardIdx===i?'armed':''} ${dim?'dim':''} ${tutHighlight?'tutPulse':''}" data-i="${i}">
         <div class="cBlock" style="background:${CFG.hex[c.color]};">
           <span class="cNum" style="color:${c.color==='c2'?'#111827':'#ffffff'}; text-shadow: ${c.color==='c2'?'none':'0 2px 8px rgba(0,0,0,0.5)'};">${c.move}</span>
         </div>
         <div class="cTag">${CFG.names[c.color]}</div>
       </div>`;
     }
-    return `<div class="card wild ${cardIdx===i?'armed':''} ${dim?'dim':''}" data-i="${i}">
+    return `<div class="card wild ${cardIdx===i?'armed':''} ${dim?'dim':''} ${tutHighlight?'tutPulse':''}" data-i="${i}">
       <div class="cBlock" style="background: linear-gradient(135deg, var(--c0), var(--c1), #fff, var(--c3), var(--c4), var(--c5));">
         <span class="cNum" style="color:#111827; text-shadow:none;">W</span>
       </div>
@@ -1118,6 +1321,7 @@ function renderHand(){
 }
 
 function renderHint(){
+  if(tutorialMode) return; // the tutorial bar owns the messaging while active
   if(locked){ $('hint').textContent='Evaluating Board Matrix...'; return; }
   if(cardIdx==null){ $('hint').textContent='Tap an available card below to begin your sequence.'; return; }
   const card=hand[cardIdx];
@@ -1171,7 +1375,7 @@ function hitBand(x,y){
 }
 
 cv.addEventListener('pointerdown',e=>{
-  if(locked || (gameMode==='vs_computer' && turn==='ai'))return; 
+  if(locked || (gameMode==='vs_computer' && turn==='ai' && !tutorialMode))return; 
   const {x,y}=evToXY(e);
   if(ringSel!=null){ const dir=hitArrow(x,y); if(dir!=null){ tapArrow(dir); return; } }
   if(hitUnplaced(x,y)){ selectUnplaced(); return; }
@@ -1237,9 +1441,18 @@ function pickAiMove(aiHand){
 }
 
 function endGame(){
-  const won=gameOver.winner==='player';
   const modal = $('endModal');
   modal.className = 'modalBg';
+  if(gameOver.draw){
+    $('endTitle').textContent = 'DRAW';
+    modal.classList.add('draw');
+    $('endText').textContent = gameMode==='pvp'
+      ? 'Both Player 1 and Player 2 landed their final pawn into the Core at the very same moment -- a perfect tie!'
+      : 'You and the AI both landed your final pawn into the Core at the very same moment -- a perfect tie!';
+    modal.classList.remove('hide');
+    return;
+  }
+  const won=gameOver.winner==='player';
   if(gameMode === 'pvp') {
     $('endTitle').textContent = won ? 'PLAYER 1 VICTORY' : 'PLAYER 2 VICTORY';
     modal.classList.add(won ? 'victory' : 'defeat');
@@ -1280,5 +1493,3 @@ genRings(); spawnPawns(); buildDeck(); fitDPR(); fitBoardSize(); requestAnimatio
 </script>
 </body>
 </html>
-```
-eof
